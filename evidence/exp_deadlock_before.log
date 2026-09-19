@@ -1,0 +1,39 @@
+>>> Starting Agent Boot Sequence...
+[1/6] Checking User Account               [OK]
+   ... Running as service user 'innuendo3712' (uid=1267600711)
+[2/6] Verifying Environment Variables     [OK]
+   ... All required Envs correct
+[3/6] Checking Required Files             [OK]
+   ... Verified 'secret.key' with correct key string.
+[4/6] Checking Port Availability          [OK]
+   ... Port 15034 is available.
+[5/6] Verifying Log Permission            [OK]
+   ... Log directory is writable: /home/innuendo3712/agent-app/logs
+[6/6] Verifying Mission Environment       [OK]
+   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=100%, MULTI_THREAD_ENABLE=True
+------------------------------------------------------------
+All Boot Checks Passed!
+Agent READY
+2026-09-20 02:21:17,974 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-09-20 02:21:17,975 [INFO] Agent listening at port 15034
+
+==================================================
+ [ Agent Initiate ] Resource Check 
+==================================================
+ [ MEMORY ] Limit: 512MB 		[ OK ]
+ [ CPU    ] Limit: 100%  		[ WARNING: Recommend Under 50% ]
+ [ THREAD ] Concurrency: True 		[ WARNING ]
+--------------------------------------------------
+ >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
+==================================================
+
+2026-09-20 02:21:19,986 [INFO] [CpuWorker] Started. Maximum CPU Limit: 100%
+2026-09-20 02:21:19,987 [INFO] [CpuWorker] Current Load: 5.00%
+2026-09-20 02:21:23,107 [INFO] [CpuWorker] Current Load: 8.43%
+2026-09-20 02:21:26,228 [INFO] [CpuWorker] Current Load: 8.97%
+2026-09-20 02:21:29,346 [INFO] [CpuWorker] Current Load: 14.56%
+2026-09-20 02:21:32,467 [INFO] [CpuWorker] Current Load: 17.61%
+2026-09-20 02:21:35,586 [INFO] [CpuWorker] Current Load: 23.72%
+2026-09-20 02:21:38,706 [INFO] [CpuWorker] Current Load: 30.89%
+2026-09-20 02:21:41,826 [INFO] [CpuWorker] Current Load: 39.56%
+2026-09-20 02:21:44,945 [INFO] [CpuWorker] Current Load: 39.87%

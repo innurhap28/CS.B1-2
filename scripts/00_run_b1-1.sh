@@ -1,8 +1,10 @@
 #!/bin/bash
 
-source library.sh
+# 1. library.sh 경로 수정 (현재 scripts 디렉터리 내부)
+source "$(dirname "$0")/library.sh"
 
-cd assignment_scripts || exit 1
+# 2. 이동할 디렉터리명을 assignment_scripts에서 B1-1로 수정
+cd "$(dirname "$0")/B1-1" || exit 1
 
 bash 00_init_vm.sh
 

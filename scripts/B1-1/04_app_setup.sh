@@ -43,7 +43,7 @@ run_vm sudo pkill -f agent-leak-app-x86 || true     # 기존 실행이 존재할
 
 # 수정 전 경로 : /mnt/mac/Users/innuendo3712/Downloads/agent-app-leak/agent-leak-app-x86
 
-run_vm sudo -u agent-admin bash -ic 'cp ../bin/agent-leak-app-x86 $AGENT_HOME/'
+run_vm sudo -u agent-admin bash -ic 'cp /mnt/mac/Users/innuendo3712/CS.B1-2/bin/agent-leak-app-x86 $AGENT_HOME/'
 run_vm sudo -u agent-admin bash -ic 'chmod +x $AGENT_HOME/agent-leak-app-x86'
 
 run_vm sudo -u agent-admin bash -ic 'nohup $AGENT_HOME/agent-leak-app-x86 > /tmp/agent-app.log 2>&1 &'
