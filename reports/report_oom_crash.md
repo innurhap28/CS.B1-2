@@ -9,11 +9,9 @@
   - 초기: `MEM: 5.1%` (정상 범위)
   - 2분 경과: `MEM: 45.2%` (상승 추세)
   - 4분 경과: `MEM: 96.8%` (임계치 도달)
-- **프로그램 실행 로그 (`/tmp/exp_oom_before.log` 발췌):**
-  ```text
-  [CRITICAL] [MemoryGuard] Memory limit exceeded (50MB >= 50MB) / (Recommend Over 256MB)
-  [CRITICAL] [MemoryGuard] Self-terminating process to prevent system instability.
-  >>> [SYSTEM] SELF-TERMINATED (Memory Limit Exceeded) <<<
+- **프로그램 실행 로그:**
+```
+```
 
 ## 3. Root Cause Analysis (원인 분석)
 - 애플리케이션 로직 내부에서 할당한 메모리 객체를 해제하지 않아 힙(Heap) 영역에 지속적으로 쌓이는 메모리 누수 (Memory Leak) 결함이 존재함. 

@@ -7,11 +7,9 @@
 ## 2. Evidence & Logs (증거 자료)
 - **top / ps 출력 및 CPU 점유율 수치:**
   - `agent-leak-app-x86` 프로세스의 CPU 사용률이 98.5%~100% 유지 확인.
-- **프로그램 실행 로그 (`/tmp/exp_cpu_before.log` 발췌):**
-  ```text
-  [WARNING] [Watchdog] CPU occupancy threshold exceeded (99% > 10%)
-  [CRITICAL] [Watchdog] Emergency abort initiated to prevent system freeze.
-  >>> [SYSTEM] WATCHDOG: INITIATING EMERGENCY ABORT (SIGTERM) <<<
+- **프로그램 실행 로그:**
+```
+```
 
 ## 3. Root Cause Analysis (원인 분석)
 - 스레드가 CPU 자원을 독점하는 Busy Waiting 연산이 존재하여 단일 프로세스가 전체 CPU 성능을 과점유함.

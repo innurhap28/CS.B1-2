@@ -8,12 +8,10 @@
   - `agent-admin  12345  ... /home/agent-admin/agent-app/agent-leak-app-x86` (프로세스 정상 등록 상태)
 - **자원 변화 정체 (`top -H` / 관제 수치):**
   - CPU: 0.0%, MEM: 변화 없음 (동결 상태)
-- **마지막 프로그램 실행 로그 (`/tmp/exp_deadlock_before.log` 발췌):**
-  ```text
-  [INFO] [Thread-1] Acquiring Lock A... Success.
-  [INFO] [Thread-2] Acquiring Lock B... Success.
-  [WARNING] [Thread-1] Waiting for Lock B... (BLOCKED)
-  [WARNING] [Thread-2] Waiting for Lock A... (BLOCKED)
+- **프로그램 실행 로그:**
+```
+```
+
 
 ## 3. Root Cause Analysis (원인 분석)
 - `MULTI_THREAD_ENABLE=true` 설정 시 멀티스레드 환경에서 Thread-1은 Lock A를 쥔 채 Lock B를 기다리고, Thread-2는 Lock B를 쥔 채 Lock A를 기다리는 순환 대기(Circular Wait) 조건이 성립함.
