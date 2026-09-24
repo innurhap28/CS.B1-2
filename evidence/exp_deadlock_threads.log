@@ -1,0 +1,2 @@
+    PID     TID %CPU %MEM STAT WCHAN
+   4677    4677  0.4  0.0 S+   do_wait

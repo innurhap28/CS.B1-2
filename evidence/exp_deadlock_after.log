@@ -5,11 +5,31 @@
    ... All required Envs correct
 [3/6] Checking Required Files             [OK]
    ... Verified 'secret.key' with correct key string.
-[4/6] Checking Port Availability          [FAIL]
-   >>> Port 15034 is already in use.
-[5/6] Verifying Log Permission            [FAIL]
-   >>> Skipped due to previous critical failure.
-[6/6] Verifying Mission Environment       [FAIL]
-   >>> Skipped due to previous critical failure.
+[4/6] Checking Port Availability          [OK]
+   ... Port 15034 is available.
+[5/6] Verifying Log Permission            [OK]
+   ... Log directory is writable: /home/innuendo3712/agent-app/logs
+[6/6] Verifying Mission Environment       [OK]
+   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=100%, MULTI_THREAD_ENABLE=False
+------------------------------------------------------------
+All Boot Checks Passed!
+Agent READY
+2026-09-25 00:13:07,546 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-09-25 00:13:07,547 [INFO] Agent listening at port 15034
+
+==================================================
+ [ Agent Initiate ] Resource Check 
+==================================================
+ [ MEMORY ] Limit: 512MB 		[ OK ]
+ [ CPU    ] Limit: 100%  		[ WARNING: Recommend Under 50% ]
+ [ THREAD ] Concurrency: False 		[ OK ]
 --------------------------------------------------
-System Boot Failed. Process Terminated.
+ >>> SYSTEM STATUS: STABLE. STARTING WORKLOAD MONITORING...
+==================================================
+
+2026-09-25 00:13:09,558 [INFO] [CpuWorker] Started. Maximum CPU Limit: 100%
+2026-09-25 00:13:09,559 [INFO] [CpuWorker] Current Load: 5.00%
+2026-09-25 00:13:12,678 [INFO] [CpuWorker] Current Load: 11.79%
+2026-09-25 00:13:15,798 [INFO] [CpuWorker] Current Load: 20.56%
+2026-09-25 00:13:18,918 [INFO] [CpuWorker] Current Load: 25.66%
+2026-09-25 00:13:22,039 [INFO] [CpuWorker] Current Load: 31.17%

@@ -21,15 +21,15 @@ export AGENT_LOG_DIR=$HOME/agent-app/logs
 # 포트 자연 해제를 기다리는 함수 (프로세스 종료 + TCP TIME_WAIT 소켓 정리 대기)
 cleanup_agent() {
     pkill -f agent-leak-app-x86 2>/dev/null || true
-    # TCP 소켓이 커널에서 완전히 릴리즈되도록 5초간 대기
-    sleep 5
+    # TCP 소켓이 커널에서 완전히 릴리즈되도록 10초간 대기
+    sleep 10
 }
 
 # 1. 필수 디렉터리 일괄 생성
 mkdir -p "$AGENT_HOME" "$AGENT_LOG_DIR" "$AGENT_UPLOAD_DIR" "$AGENT_KEY_PATH"
 
 # 2. 필수 파일 생성
-echo "dummy-secret-key-1234" > "$AGENT_KEY_PATH/secret.key"
+echo "agent_api_key_test" > "$AGENT_KEY_PATH/secret.key"
 touch "$AGENT_LOG_DIR/agent.log"
 
 # 3. 초기 포트 정리
@@ -40,6 +40,41 @@ if [ ! -f "$AGENT_HOME/agent-leak-app-x86" ]; then
     cp /mnt/mac/Users/innuendo3712/CS.B1-2/bin/agent-leak-app-x86 "$AGENT_HOME/"
     chmod +x "$AGENT_HOME/agent-leak-app-x86"
 fi
+
+# monitor.sh 생성
+cat << 'MONITOR_EOF' > "$AGENT_HOME/monitor.sh"
+#!/bin/bash
+
+PID="$1"
+INTERVAL="${2:-1}"
+
+if [ -z "$PID" ]; then
+    echo "Usage: $0 <PID> [interval]"
+    exit 1
+fi
+
+echo "timestamp,pid,cpu_percent,rss_kb,vsz_kb"
+
+while kill -0 "$PID" 2>/dev/null; do
+    if ps -p "$PID" -o pid= > /dev/null 2>&1; then
+        ps -p "$PID" -o pid=,pcpu=,rss=,vsz= | \
+        awk -v pid="$PID" '{
+            printf "%s,%s,%s,%s,%s\n",
+                   strftime("%Y-%m-%d %H:%M:%S"),
+                   pid,
+                   $2,
+                   $3,
+                   $4
+        }'
+    fi
+
+    sleep "$INTERVAL"
+done
+
+echo "PROCESS_EXITED,pid=$PID"
+MONITOR_EOF
+
+chmod +x "$AGENT_HOME/monitor.sh"
 
 MAC_PROJECT_DIR="/mnt/mac/Users/innuendo3712/CS.B1-2"
 
@@ -53,17 +88,29 @@ export MEMORY_LIMIT=50
 export CPU_MAX_OCCUPY=100
 export MULTI_THREAD_ENABLE=true
 
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_oom_before.log" 2>&1 &
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_oom_before.log" 2>&1 &
 OOM_PID=$!
-echo "OOM Before 실행 중 (약 30초 대기)..."
+echo "OOM Before 실행 중..."
+echo "PID: $OOM_PID"
+"$AGENT_HOME/monitor.sh" "$OOM_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_oom_before_monitor.csv" 2>&1 &
+OOM_MONITOR_PID=$!
 sleep 30
+kill "$OOM_MONITOR_PID" 2>/dev/null || true
 cleanup_agent
 
 export MEMORY_LIMIT=512
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_oom_after.log" 2>&1 &
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_oom_after.log" 2>&1 &
 OOM_AFTER_PID=$!
-echo "OOM After 실행 중 (약 15초 대기)..."
+echo "OOM After 실행 중..."
+echo "PID: $OOM_AFTER_PID"
+"$AGENT_HOME/monitor.sh" "$OOM_AFTER_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_oom_after_monitor.csv" 2>&1 &
+OOM_AFTER_MONITOR_PID=$!
 sleep 15
+kill "$OOM_AFTER_MONITOR_PID" 2>/dev/null || true
 cleanup_agent
 
 # ----------------------------------------------------
@@ -76,17 +123,29 @@ export MEMORY_LIMIT=512
 export CPU_MAX_OCCUPY=10
 export MULTI_THREAD_ENABLE=true
 
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_cpu_before.log" 2>&1 &
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_cpu_before.log" 2>&1 &
 CPU_PID=$!
-echo "CPU Before 실행 중 (약 20초 대기)..."
+echo "CPU Before 실행 중..."
+echo "PID: $CPU_PID"
+"$AGENT_HOME/monitor.sh" "$CPU_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_cpu_before_monitor.csv" 2>&1 &
+CPU_MONITOR_PID=$!
 sleep 20
+kill "$CPU_MONITOR_PID" 2>/dev/null || true
 cleanup_agent
 
 export CPU_MAX_OCCUPY=90
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_cpu_after.log" 2>&1 &
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_cpu_after.log" 2>&1 &
 CPU_AFTER_PID=$!
-echo "CPU After 실행 중 (약 15초 대기)..."
+echo "CPU After 실행 중..."
+echo "PID: $CPU_AFTER_PID"
+"$AGENT_HOME/monitor.sh" "$CPU_AFTER_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_cpu_after_monitor.csv" 2>&1 &
+CPU_AFTER_MONITOR_PID=$!
 sleep 15
+kill "$CPU_AFTER_MONITOR_PID" 2>/dev/null || true
 cleanup_agent
 
 # ----------------------------------------------------
@@ -99,18 +158,58 @@ export MEMORY_LIMIT=512
 export CPU_MAX_OCCUPY=100
 export MULTI_THREAD_ENABLE=true
 
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_deadlock_before.log" 2>&1 &
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_before.log" 2>&1 &
+
 DL_PID=$!
-echo "Deadlock Before 실행 중 (약 15초 대기)..."
+
+echo "Deadlock Before 실행 중..."
+echo "PID: $DL_PID"
+
+"$AGENT_HOME/monitor.sh" "$DL_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_monitor.csv" 2>&1 &
+
+DL_MONITOR_PID=$!
+
 sleep 15
-ps -ef | grep agent-leak-app-x86 | grep -v grep > "$MAC_PROJECT_DIR/evidence/exp_deadlock_ps.log"
+
+# 프로세스 존재 증거
+ps -ef | grep agent-leak-app-x86 | grep -v grep \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_ps.log"
+
+# 스레드별 CPU/MEM 상태
+ps -L -p "$DL_PID" -o pid,tid,pcpu,pmem,stat,wchan:30 \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_threads.log"
+
+kill "$DL_MONITOR_PID" 2>/dev/null || true
+
 cleanup_agent
 
 export MULTI_THREAD_ENABLE=false
-"$AGENT_HOME/agent-leak-app-x86" > "$MAC_PROJECT_DIR/evidence/exp_deadlock_after.log" 2>&1 &
+
+"$AGENT_HOME/agent-leak-app-x86" \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_after.log" 2>&1 &
+
 DL_AFTER_PID=$!
-echo "Deadlock After 실행 중 (약 15초 대기)..."
+
+echo "Deadlock After 실행 중..."
+echo "PID: $DL_AFTER_PID"
+
+"$AGENT_HOME/monitor.sh" "$DL_AFTER_PID" 1 \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_after_monitor.csv" 2>&1 &
+
+DL_AFTER_MONITOR_PID=$!
+
 sleep 15
+
+ps -ef | grep agent-leak-app-x86 | grep -v grep \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_after_ps.log"
+
+ps -L -p "$DL_AFTER_PID" -o pid,tid,pcpu,pmem,stat,wchan:30 \
+    > "$MAC_PROJECT_DIR/evidence/exp_deadlock_after_threads.log"
+
+kill "$DL_AFTER_MONITOR_PID" 2>/dev/null || true
+
 cleanup_agent
 
 EOF
