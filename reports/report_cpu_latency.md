@@ -1,23 +1,40 @@
-[Bug] CPU Latency - Watchdog 보호 조치에 의한 프로세스 강제 종료
+# [Bug] CPU Latency - CPU 제한값 변경에 따른 과점유 보호 동작 분석
 
 ## 1. Description (현상 설명)
-- `agent-leak-app` 실행 후 무한 루프 또는 과도한 연산 로직으로 인해 CPU 사용률이 급격히 100%에 가깝게 치솟는 현상이 발생함.
-- 과점유 상태가 지속되면 Watchdog 시스템 보호 모듈에 의해 `SIGTERM` 신호를 받고 프로세스가 종료됨.
+
+`CPU_MAX_OCCUPY=10`과 `90`으로 실행한 로그가 저장되어 있으나, 현재 체크인된 증거만으로는 Watchdog에 의한 종료나 CPU 과점유를 입증할 수 없다. 보고서 초안에 있던 `98.5%~100%`, `SIGTERM`, 생존 여부는 해당 로그에서 확인되지 않아 결과로 사용하지 않는다.
 
 ## 2. Evidence & Logs (증거 자료)
-- **top / ps 출력 및 CPU 점유율 수치:**
-  - `agent-leak-app-x86` 프로세스의 CPU 사용률이 98.5%~100% 유지 확인.
-- **프로그램 실행 로그:**
+
+### Before: `CPU_MAX_OCCUPY=10`
+
+[`evidence/exp_cpu_before.log`](../evidence/exp_cpu_before.log)는 `CPU_MAX_OCCUPY=10%`로 부팅한 사실을 보여준다. 하지만 실제 로그는 다음과 같이 두 AgentWorker가 서로의 락을 기다리는 상태에서 끝난다.
+
+```text
+2026-09-25 00:11:46,545 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
+2026-09-25 00:11:46,546 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)
 ```
-```
+
+따라서 이 실행은 CPU 실험의 증거가 아니라 Deadlock 재현 로그가 잘못 저장된 것으로 보인다. [`evidence/exp_cpu_before_monitor.csv`](../evidence/exp_cpu_before_monitor.csv)의 기록도 프로세스 CPU가 대략 `0.3~6.8%`이며, 과점유 구간이나 `PROCESS_EXITED`가 없다.
+
+### After: `CPU_MAX_OCCUPY=90`
+
+[`evidence/exp_cpu_after.log`](../evidence/exp_cpu_after.log)는 `CpuWorker`가 시작했고 관측된 내부 Load가 약 `5.19%`에서 `23.27%`까지 증가한 기록을 담고 있다. [`evidence/exp_cpu_after_monitor.csv`](../evidence/exp_cpu_after_monitor.csv)의 프로세스 CPU는 약 `0.4~6.8%`로 나타난다. 종료 로그, Watchdog 메시지, SIGTERM 증거는 이 파일들에 없다.
 
 ## 3. Root Cause Analysis (원인 분석)
-- 스레드가 CPU 자원을 독점하는 Busy Waiting 연산이 존재하여 단일 프로세스가 전체 CPU 성능을 과점유함.
-- 시스템 부하 및 타 프로세스 기아 상태를 방지하기 위해 Watchdog 모듈이 `CPU_MAX_OCCUPY` 제한(10%) 초과 감지 즉시 SIGTERM을 전송함.
+
+현재 자료는 과점유 또는 Watchdog 종료가 아니라 CPU Worker가 실행되었다는 점만 뒷받침한다. Before 로그의 Deadlock은 CPU 비교 실험에 `MULTI_THREAD_ENABLE=true`를 함께 사용한 실험 구성 문제로 판단된다. 이 때문에 CPU 설정값만의 효과를 비교할 수 없다.
+
+프로세스 관제의 `%CPU`는 OS가 관측한 프로세스 사용률이고, `CpuWorker`의 `Current Load`는 애플리케이션 내부 로그 값이다. 서로 다른 지표이므로 같은 수치처럼 비교하지 않는다.
 
 ## 4. Workaround & Verification (조치 및 검증)
-- **환경변수 조정** : `CPU_MAX_OCCUPY`를 `10`(Before)에서 `90`(After)로 상향 변경함.
-- **Before & After 비교** : 
-  - **Before (10%)** : CPU 부하 발생 직후 Watchdog에 걸려 곧바로 SIGTERM 강제 종료됨.
-  - **After (90%)** : CPU 허용 임계치가 증가함에 따라 비정상 종료 없이 프로세스가 계속 유지됨.
-- **추가 제안** : 무한 루프 내 `sleep` 타임 슬롯을 추가하거나 로직 비동기화를 통해 CPU 점유 시간을 완화해야 함.
+
+| 항목 | Before | After |
+|---|---:|---:|
+| `CPU_MAX_OCCUPY` | 10% | 90% |
+| 멀티스레드 | 기존 로그의 부팅 설정은 `true` | 기존 로그의 부팅 설정은 `true` |
+| 관측된 프로세스 CPU 범위 | 0.3~6.8% | 0.4~6.8% |
+| Watchdog/SIGTERM | 증거 없음 | 증거 없음 |
+| 결론 | CPU 실험으로 사용할 수 없음 (Deadlock 로그 혼입) | 과점유/종료 여부 확인 불가 |
+
+재현 가능한 비교를 위해 [`scripts/01_run_experiments.sh`](../scripts/01_run_experiments.sh)는 두 CPU 케이스 모두 `MULTI_THREAD_ENABLE=false`로 실행하도록 수정했다. VM 실행 환경에서 스크립트를 다시 실행하면 로그, 프로세스 CSV, 프로세스 상태, 실행 종료 이유를 새로 수집할 수 있다. 현 환경에는 OrbStack CLI가 없어 재측정은 수행하지 못했으며, 따라서 본 보고서의 CPU 실험 결과는 미완료다.
