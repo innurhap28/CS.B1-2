@@ -10,24 +10,24 @@
 [5/6] Verifying Log Permission            [OK]
    ... Log directory is writable: /home/innuendo3712/agent-app/logs
 [6/6] Verifying Mission Environment       [OK]
-   ... MEMORY_LIMIT=50MB, CPU_MAX_OCCUPY=100%, MULTI_THREAD_ENABLE=True
+   ... MEMORY_LIMIT=50MB, CPU_MAX_OCCUPY=10%, MULTI_THREAD_ENABLE=False
 ------------------------------------------------------------
 All Boot Checks Passed!
 Agent READY
-2026-09-25 00:10:22,484 [INFO] [SafetyGuard] Process priority lowered (nice=10).
-2026-09-25 00:10:22,484 [INFO] Agent listening at port 15034
+2026-10-29 22:13:58,493 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-10-29 22:13:58,493 [INFO] Agent listening at port 15034
 
 ==================================================
  [ Agent Initiate ] Resource Check 
 ==================================================
  [ MEMORY ] Limit: 50MB 		[ WARNING: Recommend Over 256MB ]
- [ CPU    ] Limit: 100%  		[ WARNING: Recommend Under 50% ]
- [ THREAD ] Concurrency: True 		[ WARNING ]
+ [ CPU    ] Limit: 10%  		[ OK ]
+ [ THREAD ] Concurrency: False 		[ OK ]
 --------------------------------------------------
- >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
+ >>> SYSTEM STATUS: STABLE. STARTING WORKLOAD MONITORING...
 ==================================================
 
-2026-09-25 00:10:24,532 [INFO] [MemoryWorker] Current Heap: 25MB
-2026-09-25 00:10:27,587 [INFO] [MemoryWorker] Current Heap: 50MB
-2026-09-25 00:10:27,587 [CRITICAL] [MemoryGuard] Memory limit exceeded (50MB >= 50MB) / (Recommend Over 256MB)
-2026-09-25 00:10:27,587 [CRITICAL] [MemoryGuard] Self-terminating process 4423 to prevent system instability.
+2026-10-29 22:14:00,533 [INFO] [MemoryWorker] Current Heap: 25MB
+2026-10-29 22:14:03,580 [INFO] [MemoryWorker] Current Heap: 50MB
+2026-10-29 22:14:03,580 [CRITICAL] [MemoryGuard] Memory limit exceeded (50MB >= 50MB) / (Recommend Over 256MB)
+2026-10-29 22:14:03,581 [CRITICAL] [MemoryGuard] Self-terminating process 5362 to prevent system instability.

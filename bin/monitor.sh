@@ -37,7 +37,7 @@ while :; do
     fi
     [[ -n "$rows" ]] || break
 
-    now="$(date +%s)"
+    now="$(date +%s.%N)"
     live_count=0
     while read -r pid ppid pgid rss vsz state; do
         [[ -n "${pid:-}" ]] || continue
@@ -56,8 +56,8 @@ while :; do
             read -r -a fields <<< "$stat_fields"
             if ((${#fields[@]} > 12)); then
                 ticks=$((fields[11] + fields[12]))
-                if [[ -n "${PREV_TICKS[$pid]:-}" && -n "$PREV_TIME" && "$now" -gt "$PREV_TIME" ]]; then
-                    cpu="$(awk -v cur="$ticks" -v prev="${PREV_TICKS[$pid]}" -v hz="$CLK_TCK" -v elapsed="$((now - PREV_TIME))" 'BEGIN { printf "%.1f", ((cur-prev)/hz/elapsed)*100 }')"
+                if [[ -n "${PREV_TICKS[$pid]:-}" && -n "$PREV_TIME" ]]; then
+                    cpu="$(awk -v cur="$ticks" -v prev="${PREV_TICKS[$pid]}" -v hz="$CLK_TCK" -v start="$PREV_TIME" -v end="$now" 'BEGIN { elapsed=end-start; if (elapsed > 0) printf "%.1f", ((cur-prev)/hz/elapsed)*100; else printf "0.0" }')"
                 fi
                 PREV_TICKS[$pid]="$ticks"
             fi

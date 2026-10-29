@@ -1,2 +1,6 @@
-    PID     TID %CPU %MEM STAT WCHAN
-   4750    4750  0.3  0.0 S+   do_wait
+    PID     TID    PPID %CPU %MEM STAT WCHAN
+   7593    7593    5340  0.2  0.0 Ss   do_wait
+    PID     TID    PPID %CPU %MEM STAT WCHAN
+   7611    7611    7593  0.2  1.0 SNl  futex_wait
+   7611    7650    7593  0.9  1.0 SNl  do_select
+   7611    7651    7593  0.2  1.0 SNl  do_select

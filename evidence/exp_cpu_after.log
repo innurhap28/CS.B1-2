@@ -10,26 +10,35 @@
 [5/6] Verifying Log Permission            [OK]
    ... Log directory is writable: /home/innuendo3712/agent-app/logs
 [6/6] Verifying Mission Environment       [OK]
-   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=90%, MULTI_THREAD_ENABLE=True
+   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=90%, MULTI_THREAD_ENABLE=False
 ------------------------------------------------------------
 All Boot Checks Passed!
 Agent READY
-2026-09-25 00:12:07,520 [INFO] [SafetyGuard] Process priority lowered (nice=10).
-2026-09-25 00:12:07,520 [INFO] Agent listening at port 15034
+2026-10-29 22:15:46,370 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-10-29 22:15:46,370 [INFO] Agent listening at port 15034
 
 ==================================================
  [ Agent Initiate ] Resource Check 
 ==================================================
  [ MEMORY ] Limit: 512MB 		[ OK ]
  [ CPU    ] Limit: 90%  		[ WARNING: Recommend Under 50% ]
- [ THREAD ] Concurrency: True 		[ WARNING ]
+ [ THREAD ] Concurrency: False 		[ OK ]
 --------------------------------------------------
- >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
+ >>> SYSTEM STATUS: STABLE. STARTING WORKLOAD MONITORING...
 ==================================================
 
-2026-09-25 00:12:09,532 [INFO] [CpuWorker] Started. Maximum CPU Limit: 90%
-2026-09-25 00:12:09,532 [INFO] [CpuWorker] Current Load: 5.00%
-2026-09-25 00:12:12,653 [INFO] [CpuWorker] Current Load: 5.19%
-2026-09-25 00:12:15,771 [INFO] [CpuWorker] Current Load: 11.84%
-2026-09-25 00:12:18,891 [INFO] [CpuWorker] Current Load: 20.15%
-2026-09-25 00:12:22,013 [INFO] [CpuWorker] Current Load: 23.27%
+2026-10-29 22:15:48,381 [INFO] [CpuWorker] Started. Maximum CPU Limit: 90%
+2026-10-29 22:15:48,382 [INFO] [CpuWorker] Current Load: 5.00%
+2026-10-29 22:15:51,501 [INFO] [CpuWorker] Current Load: 11.29%
+2026-10-29 22:15:54,621 [INFO] [CpuWorker] Current Load: 13.82%
+2026-10-29 22:15:57,744 [INFO] [CpuWorker] Current Load: 14.23%
+2026-10-29 22:16:00,865 [INFO] [CpuWorker] Current Load: 16.98%
+2026-10-29 22:16:03,986 [INFO] [CpuWorker] Current Load: 25.38%
+2026-10-29 22:16:07,106 [INFO] [CpuWorker] Current Load: 27.86%
+2026-10-29 22:16:10,229 [INFO] [CpuWorker] Current Load: 32.38%
+2026-10-29 22:16:13,351 [INFO] [CpuWorker] Current Load: 33.77%
+2026-10-29 22:16:16,473 [INFO] [CpuWorker] Current Load: 36.76%
+2026-10-29 22:16:19,593 [INFO] [CpuWorker] Current Load: 39.11%
+2026-10-29 22:16:22,713 [INFO] [CpuWorker] Current Load: 47.29%
+2026-10-29 22:16:25,833 [INFO] [CpuWorker] Current Load: 51.10%
+2026-10-29 22:16:25,935 [CRITICAL] [CpuWorker] CPU Threshold Violated! (51.1%).

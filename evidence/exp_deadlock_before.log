@@ -10,26 +10,33 @@
 [5/6] Verifying Log Permission            [OK]
    ... Log directory is writable: /home/innuendo3712/agent-app/logs
 [6/6] Verifying Mission Environment       [OK]
-   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=100%, MULTI_THREAD_ENABLE=True
+   ... MEMORY_LIMIT=512MB, CPU_MAX_OCCUPY=10%, MULTI_THREAD_ENABLE=True
 ------------------------------------------------------------
 All Boot Checks Passed!
 Agent READY
-2026-09-25 00:12:42,546 [INFO] [SafetyGuard] Process priority lowered (nice=10).
-2026-09-25 00:12:42,547 [INFO] Agent listening at port 15034
+2026-10-29 22:16:26,875 [INFO] [SafetyGuard] Process priority lowered (nice=10).
+2026-10-29 22:16:26,875 [INFO] Agent listening at port 15034
 
 ==================================================
  [ Agent Initiate ] Resource Check 
 ==================================================
  [ MEMORY ] Limit: 512MB 		[ OK ]
- [ CPU    ] Limit: 100%  		[ WARNING: Recommend Under 50% ]
+ [ CPU    ] Limit: 10%  		[ OK ]
  [ THREAD ] Concurrency: True 		[ WARNING ]
 --------------------------------------------------
  >>> SYSTEM WARNING: POTENTIAL DEADLOCK IN CONCURRENT MODE.
 ==================================================
 
-2026-09-25 00:12:44,558 [INFO] [CpuWorker] Started. Maximum CPU Limit: 100%
-2026-09-25 00:12:44,559 [INFO] [CpuWorker] Current Load: 5.00%
-2026-09-25 00:12:47,679 [INFO] [CpuWorker] Current Load: 5.95%
-2026-09-25 00:12:50,798 [INFO] [CpuWorker] Current Load: 6.02%
-2026-09-25 00:12:53,919 [INFO] [CpuWorker] Current Load: 11.74%
-2026-09-25 00:12:57,040 [INFO] [CpuWorker] Current Load: 21.45%
+2026-10-29 22:16:28,886 [WARNING] [AgentWorker] Initializing concurrent transaction processors...
+2026-10-29 22:16:28,886 [WARNING] [System] CAUTION: Strict resource locking is enabled.
+2026-10-29 22:16:33,913 [INFO] [Worker-Thread-1] Process Started. Attempting to lock [Shared_Memory_A]...
+2026-10-29 22:16:33,914 [INFO] [AgentWorker][Worker-Thread-1] LOCK ACQUIRED: [Shared_Memory_A]. (Holding...)
+2026-10-29 22:16:33,914 [INFO] [AgentWorker][Worker-Thread-2] Process Started. Attempting to lock [Socket_Pool_B]...
+2026-10-29 22:16:33,914 [INFO] [AgentWorker][Worker-Thread-1] Processing critical data in Memory A...
+2026-10-29 22:16:33,914 [INFO] [AgentWorker] Waiting for worker threads to complete transactions...
+2026-10-29 22:16:33,915 [INFO] [AgentWorker][Worker-Thread-2] LOCK ACQUIRED: [Socket_Pool_B]. (Holding...)
+2026-10-29 22:16:33,915 [INFO] [AgentWorker][Worker-Thread-2] Establishing network connections in Pool B...
+2026-10-29 22:16:35,926 [INFO] [AgentWorker][Worker-Thread-1] Need resource [Socket_Pool_B] to finish job.
+2026-10-29 22:16:35,927 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
+2026-10-29 22:16:35,926 [INFO] [AgentWorker][Worker-Thread-2] Need resource [Shared_Memory_A] to write logs.
+2026-10-29 22:16:35,927 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)

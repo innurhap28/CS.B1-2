@@ -1,42 +1,45 @@
-# [Bug] CPU Latency - CPU 제한값 변경에 따른 과점유 보호 동작 분석
+# [Bug] CPU Latency - CPU Worker 제한 변경과 임계치 종료
 
 ## 1. Description (현상 설명)
 
-`CPU_MAX_OCCUPY=10`과 `90`으로 실행한 로그가 저장되어 있으나, 현재 체크인된 증거만으로는 Watchdog에 의한 종료나 CPU 과점유를 입증할 수 없다. 보고서 초안에 있던 `98.5%~100%`, `SIGTERM`, 생존 여부는 해당 로그에서 확인되지 않아 결과로 사용하지 않는다.
+`CPU_MAX_OCCUPY=10`에서는 앱 내부 CpuWorker Load가 10%에서 cooldown을 반복했고 실행이 60초 관측을 버텼다. `CPU_MAX_OCCUPY=90`에서는 내부 Load가 51.1%에 도달했을 때 `CPU Threshold Violated` 로그가 발생했고, process group이 약 40초 후 SIGTERM 종료 상태로 끝났다.
 
 ## 2. Evidence & Logs (증거 자료)
 
-실험기는 `./bin/monitor.sh --pgroup <PGID> 1`로 프로세스 그룹 내 PID별 CPU/RSS 추이를 CSV로 수집하고, `ps --pgroup <PGID> ... --forest`로 부모·자식 관계를 남긴다. `top -H -b -n 2 -p <PIDLIST>`는 스레드 단위 부하 스냅샷, 앱 로그는 Watchdog/SIGTERM 원인 확인에 사용한다. 각 명령을 선택한 이유와 `htop`, `vmstat`, `pidstat` 등의 장단점은 [리소스 관측 명령과 선택 이유](command_reference.md#cpu-과점유--latency)에 정리했다.
+실험기는 `./bin/monitor.sh --pgroup <PGID> 1`로 process group의 PID별 RSS와 1초 CPU 구간값을 기록하고 `top -H -b -d 1`을 케이스 전체 구간 동안 저장했다. `ps -eo ... | awk ...`는 부모/자식 PID를 확인하는 데 사용했다. 로그 검색에는 `grep`을 써 설정값과 앱 종료 메시지를 확인했다. 도구의 이유와 `htop`, `vmstat`, `pidstat` 대안 비교는 [명령어 비교 문서](command_reference.md#cpu-과점유--latency)에 있다.
 
 ### Before: `CPU_MAX_OCCUPY=10`
 
-[`evidence/exp_cpu_before.log`](../evidence/exp_cpu_before.log)는 `CPU_MAX_OCCUPY=10%`로 부팅한 사실을 보여준다. 하지만 실제 로그는 다음과 같이 두 AgentWorker가 서로의 락을 기다리는 상태에서 끝난다.
+[`evidence/exp_cpu_before.log`](../evidence/exp_cpu_before.log)에서 CpuWorker가 `Maximum CPU Limit: 10%`으로 시작하고 `Peak reached (10.00%). Starting cooldown...`을 반복했다. [`evidence/exp_cpu_before.meta`](../evidence/exp_cpu_before.meta)는 PID/PGID `5979`, `HARNESS_STOPPED_AFTER=60s`를 기록한다. 앱은 60초 동안 자체 종료하지 않았다.
 
-```text
-2026-09-25 00:11:46,545 [INFO] [AgentWorker][Worker-Thread-1] WAITING for [Socket_Pool_B]... (Status: BLOCKED)
-2026-09-25 00:11:46,546 [INFO] [AgentWorker][Worker-Thread-2] WAITING for [Shared_Memory_A]... (Status: BLOCKED)
-```
-
-따라서 이 실행은 CPU 실험의 증거가 아니라 Deadlock 재현 로그가 잘못 저장된 것으로 보인다. [`evidence/exp_cpu_before_monitor.csv`](../evidence/exp_cpu_before_monitor.csv)의 기록도 프로세스 CPU가 대략 `0.3~6.8%`이며, 과점유 구간이나 `PROCESS_EXITED`가 없다.
+[`evidence/exp_cpu_before_monitor.csv`](../evidence/exp_cpu_before_monitor.csv)의 OS 구간 CPU 최대는 약 5%였고, 연속 [`top` 스냅샷](../evidence/exp_cpu_before_top.log)에서도 앱 프로세스 값은 약 4% 이내였다. `top`의 시스템 CPU 요약은 대부분 99% 이상 idle이었다.
 
 ### After: `CPU_MAX_OCCUPY=90`
 
-[`evidence/exp_cpu_after.log`](../evidence/exp_cpu_after.log)는 `CpuWorker`가 시작했고 관측된 내부 Load가 약 `5.19%`에서 `23.27%`까지 증가한 기록을 담고 있다. [`evidence/exp_cpu_after_monitor.csv`](../evidence/exp_cpu_after_monitor.csv)의 프로세스 CPU는 약 `0.4~6.8%`로 나타난다. 종료 로그, Watchdog 메시지, SIGTERM 증거는 이 파일들에 없다.
+[`evidence/exp_cpu_after.log`](../evidence/exp_cpu_after.log)에는 내부 Load가 5%에서 51.1%까지 증가한 뒤 다음 로그가 있다.
+
+```text
+2026-10-29 22:16:22,713 [INFO] [CpuWorker] Current Load: 47.29%
+2026-10-29 22:16:25,833 [INFO] [CpuWorker] Current Load: 51.10%
+2026-10-29 22:16:25,935 [CRITICAL] [CpuWorker] CPU Threshold Violated! (51.1%).
+```
+
+[`evidence/exp_cpu_after.meta`](../evidence/exp_cpu_after.meta)는 PID/PGID `6769`, 앱 종료까지 약 40초, leader exit status `143`(SIGTERM 관례 값)을 기록한다. 명시적인 `WATCHDOG` 또는 `SIGTERM` 앱 로그는 없다. [`evidence/exp_cpu_after_monitor.csv`](../evidence/exp_cpu_after_monitor.csv)의 OS 구간 CPU 최대는 약 5%이고 [`top` 스냅샷](../evidence/exp_cpu_after_top.log)에서도 시스템 CPU는 대체로 idle이었다.
 
 ## 3. Root Cause Analysis (원인 분석)
 
-현재 자료는 과점유 또는 Watchdog 종료가 아니라 CPU Worker가 실행되었다는 점만 뒷받침한다. Before 로그의 Deadlock은 CPU 비교 실험에 `MULTI_THREAD_ENABLE=true`를 함께 사용한 실험 구성 문제로 판단된다. 이 때문에 CPU 설정값만의 효과를 비교할 수 없다.
+이 비교는 `CPU_MAX_OCCUPY`에 따라 앱 내부 CpuWorker의 동작과 생존 시간이 달라짐을 보여준다. 10% 설정은 부하를 제한하고 cooldown하며, 90% 설정은 내부 Load가 51.1%에 도달한 시점에 `CPU Threshold Violated`를 기록한 뒤 process group이 SIGTERM 상태로 종료됐다. 관측 결과는 설정값과 별도로 앱 내부에 약 50% 부근의 보호 임계치가 있는 것처럼 보이지만, 바이너리 내부 구현을 확인할 수 없으므로 이는 로그에서 도출한 추론이다. 로그는 종료 주체를 `Watchdog`라고 명시하지 않으므로 보고서에서는 앱 로그 그대로 CpuWorker 임계치 종료라고 표현한다.
 
-프로세스 관제의 `%CPU`는 OS가 관측한 프로세스 사용률이고, `CpuWorker`의 `Current Load`는 애플리케이션 내부 로그 값이다. 서로 다른 지표이므로 같은 수치처럼 비교하지 않는다.
+**명세와의 차이:** monitor와 `top`이 측정한 실제 OS process CPU는 최대 약 5%였고 시스템 CPU도 포화되지 않았다. 앱 내부 `Current Load`는 OS process `%CPU`와 일치하지 않는다. 따라서 현재 바이너리 실행으로는 명세의 “특정 프로세스 CPU 급상승”과 시스템 지연을 객관적으로 입증하지 못한다. 이 수치를 OS 사용률로 바꿔 적지 않았다.
 
 ## 4. Workaround & Verification (조치 및 검증)
 
 | 항목 | Before | After |
 |---|---:|---:|
 | `CPU_MAX_OCCUPY` | 10% | 90% |
-| 멀티스레드 | 기존 로그의 부팅 설정은 `true` | 기존 로그의 부팅 설정은 `true` |
-| 관측된 프로세스 CPU 범위 | 0.3~6.8% | 0.4~6.8% |
-| Watchdog/SIGTERM | 증거 없음 | 증거 없음 |
-| 결론 | CPU 실험으로 사용할 수 없음 (Deadlock 로그 혼입) | 과점유/종료 여부 확인 불가 |
+| 앱 내부 CpuWorker Load | 10%에서 cooldown 반복 | 51.1%에서 threshold 위반 로그 |
+| OS process CPU | 최대 약 5% | 최대 약 5% |
+| 관측 결과 | 60초 생존 후 하네스 정리 | 약 40초 후 종료, leader status 143 |
+| Watchdog 텍스트 로그 | 없음 | 없음; 대신 CpuWorker threshold 로그 |
 
-재현 가능한 비교를 위해 [`scripts/01_run_experiments.sh`](../scripts/01_run_experiments.sh)는 두 CPU 케이스 모두 `MULTI_THREAD_ENABLE=false`로 실행한다. 실험기는 로그, process group별 CSV, 프로세스/스레드 상태, 종료 주체를 새로 수집하도록 보완했다. OrbStack CLI는 설치되어 있지만 현재 `orbctl status`가 `Stopped`이고 VM 시작 시 `VM exited unexpectedly`가 발생해 재측정하지 못했다. 따라서 본 보고서의 CPU 실험 결과는 미완료다.
+멀티스레드 상태와 다른 설정은 동일하게 두고 CPU 설정만 변경했다. CPU 제한 설정에 따른 앱 동작 및 생존 시간 차이는 검증했다. 하지만 OS CPU spike 증거가 없으므로 CPU 과점유 장애 요구사항은 **부분 충족**이다. 실제 OS CPU 과점유를 요구하는 평가라면 제공 바이너리의 workload 동작 또는 VM 측정 조건을 추가 확인해야 한다.
