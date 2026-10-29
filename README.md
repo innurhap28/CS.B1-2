@@ -28,7 +28,7 @@ VM 안의 사용자는 root가 아니어야 합니다. 스크립트가 필요한
 ## 최신 실험 결과 요약
 
 - OOM: `MEMORY_LIMIT=50`에서 MemoryGuard 종료와 자식 RSS 약 18MB→44MB 상승을 관측했습니다. `512`에서는 40초 동안 Heap 325MB/RSS 약 326MB까지 증가했고, 하네스가 관측을 끝냈습니다.
-- CPU: `CPU_MAX_OCCUPY=10`은 내부 CpuWorker Load를 10%에서 제한해 60초 생존했습니다. `90`은 내부 Load 51.1%에서 앱 threshold 로그를 남기고 약 40초 후 SIGTERM 상태로 종료됐습니다. 단, OS가 측정한 process CPU는 최대 약 5%이고 시스템 CPU는 거의 idle이라 실제 CPU 과점유 증거는 부분 충족입니다.
+- CPU: `CPU_MAX_OCCUPY=10`은 내부 CpuWorker Load를 10%에서 제한해 60초 생존했습니다. `90`은 내부 Load 51.1%에서 앱 threshold 로그를 남기고 약 40초 후 SIGTERM 상태로 종료됐습니다. 앱 내부 Load가 하드코딩 또는 자체 계산 지표일 가능성은 있으나 바이너리를 확인하지 않아 미확인 가설입니다. OS process CPU는 별도 측정으로 최대 약 5%였으며 내부 Load와 혼합해 해석하지 않습니다.
 - Deadlock: `MULTI_THREAD_ENABLE=true`에서 두 Worker의 순환 `WAITING/BLOCKED`와 TID의 `futex_wait`를 확인했습니다. `false`에서는 같은 로그가 없고 작업 진행이 관측됐습니다.
 
 실험을 다시 실행하면 `evidence/` 파일을 덮어씁니다. `.meta`의 `HARNESS_STOPPED_AFTER`는 수집기가 정리한 종료이고, `APP_EXITED_AFTER`는 앱 종료입니다. 각 보고서의 해석과 남은 CPU 측정 한계를 제출 전에 함께 검토하세요.
