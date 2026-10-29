@@ -6,6 +6,8 @@
 
 ## 2. Evidence & Logs (증거 자료)
 
+프로세스 계보는 `ps --pgroup <PGID> ... --forest`, 스레드별 상태와 대기 채널은 `ps --pgroup <PGID> -L ... wchan`, 부하 정체는 `top -H`와 process group monitor CSV로 확인한다. 마지막 `WAITING/BLOCKED` 앱 로그와 함께 대조한다. `strace` 등 대안의 장단점 및 명령 선택 근거는 [리소스 관측 명령과 선택 이유](command_reference.md#deadlock)에 정리했다.
+
 ### 체크인된 Deadlock 증거의 불일치
 
 - [`evidence/exp_cpu_before.log`](../evidence/exp_cpu_before.log)에 `MULTI_THREAD_ENABLE=True` 설정과 다음 두 대기 로그가 있다.
@@ -31,4 +33,4 @@
 
 명세의 비교 방법은 `MULTI_THREAD_ENABLE=true`와 `false`를 각각 실행해 로그 및 스레드 상태를 대조하는 것이다. 현재 `exp_deadlock_after.log`는 `false` 설정에서 CpuWorker 진행 로그가 있는 반면 `exp_deadlock_after_threads.log`도 헤더만 있어, After 실행이 Deadlock을 회피했다는 결론을 프로세스/스레드 관측으로 확인하지 못했다.
 
-실험 실행기를 수정하여 Before/After 각각에 독립적인 로그, PID metadata, 프로세스 상태, 20초 시점의 `ps -L` 결과를 저장하도록 했다. OrbStack이 제공되는 Linux VM에서 `scripts/01_run_experiments.sh`를 다시 실행해 증거 세트를 갱신해야 최종 검증을 완료할 수 있다. 현재 실행 환경에는 `orb`가 없어 재측정하지 못했다.
+실험 실행기를 수정하여 Before/After 각각에 독립적인 로그, PID/PGID metadata, process group 상태, 20초 시점의 모든 그룹 멤버에 대한 `ps -L` 및 `top -H` 결과를 저장하도록 했다. OrbStack CLI는 설치되어 있지만 현재 `orbctl status`가 `Stopped`이고 VM 시작 시 `VM exited unexpectedly`가 발생해 재측정하지 못했다. VM이 정상 실행되면 `scripts/01_run_experiments.sh`를 실행해 증거 세트를 갱신해야 최종 검증을 완료할 수 있다.

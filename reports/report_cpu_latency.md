@@ -6,6 +6,8 @@
 
 ## 2. Evidence & Logs (증거 자료)
 
+실험기는 `./bin/monitor.sh --pgroup <PGID> 1`로 프로세스 그룹 내 PID별 CPU/RSS 추이를 CSV로 수집하고, `ps --pgroup <PGID> ... --forest`로 부모·자식 관계를 남긴다. `top -H -b -n 2 -p <PIDLIST>`는 스레드 단위 부하 스냅샷, 앱 로그는 Watchdog/SIGTERM 원인 확인에 사용한다. 각 명령을 선택한 이유와 `htop`, `vmstat`, `pidstat` 등의 장단점은 [리소스 관측 명령과 선택 이유](command_reference.md#cpu-과점유--latency)에 정리했다.
+
 ### Before: `CPU_MAX_OCCUPY=10`
 
 [`evidence/exp_cpu_before.log`](../evidence/exp_cpu_before.log)는 `CPU_MAX_OCCUPY=10%`로 부팅한 사실을 보여준다. 하지만 실제 로그는 다음과 같이 두 AgentWorker가 서로의 락을 기다리는 상태에서 끝난다.
@@ -37,4 +39,4 @@
 | Watchdog/SIGTERM | 증거 없음 | 증거 없음 |
 | 결론 | CPU 실험으로 사용할 수 없음 (Deadlock 로그 혼입) | 과점유/종료 여부 확인 불가 |
 
-재현 가능한 비교를 위해 [`scripts/01_run_experiments.sh`](../scripts/01_run_experiments.sh)는 두 CPU 케이스 모두 `MULTI_THREAD_ENABLE=false`로 실행하도록 수정했다. VM 실행 환경에서 스크립트를 다시 실행하면 로그, 프로세스 CSV, 프로세스 상태, 실행 종료 이유를 새로 수집할 수 있다. 현 환경에는 OrbStack CLI가 없어 재측정은 수행하지 못했으며, 따라서 본 보고서의 CPU 실험 결과는 미완료다.
+재현 가능한 비교를 위해 [`scripts/01_run_experiments.sh`](../scripts/01_run_experiments.sh)는 두 CPU 케이스 모두 `MULTI_THREAD_ENABLE=false`로 실행한다. 실험기는 로그, process group별 CSV, 프로세스/스레드 상태, 종료 주체를 새로 수집하도록 보완했다. OrbStack CLI는 설치되어 있지만 현재 `orbctl status`가 `Stopped`이고 VM 시작 시 `VM exited unexpectedly`가 발생해 재측정하지 못했다. 따라서 본 보고서의 CPU 실험 결과는 미완료다.

@@ -10,6 +10,8 @@
 
 ## 2. Evidence & Logs (증거 자료)
 
+리소스 수집에는 `./bin/monitor.sh --pgroup <PGID> 1`을 사용하고 PID별 RSS/VSZ와 초당 CPU 사용률을 CSV로 남긴다. 앱 로그에서 Heap 및 MemoryGuard 메시지를 확인하고, `ps --pgroup <PGID> ... --forest`로 프로세스 계보를 대조한다. 명령 선택 이유와 `free`, `ps`, `/proc` 등 대안의 장단점은 [리소스 관측 명령과 선택 이유](command_reference.md#oom-crash)에 정리했다.
+
 ### 2.1 Before - MEMORY_LIMIT=50MB
 
 프로그램 실행 시 `MEMORY_LIMIT=50MB`가 적용되어 있었다.

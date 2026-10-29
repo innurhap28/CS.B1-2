@@ -10,6 +10,7 @@
 - `scripts/01_run_experiments_vm.sh`: Ubuntu VM에서 실행 및 증거 저장
 - `evidence/`: 실행 로그, 프로세스 관측 CSV, PID/스레드 스냅샷
 - `reports/`: OOM, CPU, Deadlock 분석 보고서
+- `reports/command_reference.md`: 리소스 수집 명령과 대안 도구 비교
 - `study.md`: 관련 OS 개념 정리
 
 ## 실험 실행
